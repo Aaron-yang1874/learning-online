@@ -9,7 +9,7 @@ interface ProgressRingProps {
   className?: string
 }
 
-export function ProgressRing({ progress, size = 120, strokeWidth = 8, className }: ProgressRingProps) {
+export const ProgressRing = React.memo(function ProgressRing({ progress, size = 120, strokeWidth = 8, className }: ProgressRingProps) {
   const radius = (size - strokeWidth) / 2
   const circumference = radius * 2 * Math.PI
   const offset = circumference - (progress / 100) * circumference
@@ -25,4 +25,4 @@ export function ProgressRing({ progress, size = 120, strokeWidth = 8, className 
       </div>
     </div>
   )
-}
+})
