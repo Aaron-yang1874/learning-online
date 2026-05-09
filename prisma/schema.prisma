@@ -1,0 +1,185 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id                String             @id @default(uuid())
+  email             String             @unique
+  password          String
+  nickname          String
+  avatar            String?
+  nativeLanguage    String             @default("zh")
+  level             String             @default("beginner")
+  streakDays        Int                @default(0)
+  totalMinutes      Int                @default(0)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  languages         UserLanguage[]
+  progress          LearningProgress[]
+  vocabularyReviews VocabularyReview[]
+  posts             Post[]
+  achievements      UserAchievement[]
+  likes             Like[]
+  comments          Comment[]
+}
+
+model UserLanguage {
+  id          String  @id @default(uuid())
+  userId      String
+  language    String
+  proficiency String  @default("A1")
+  isLearning  Boolean @default(true)
+
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, language])
+}
+
+model Course {
+  id            String   @id @default(uuid())
+  language      String
+  title         String
+  description   String
+  level         String
+  type          String   @default("system")
+  thumbnail     String?
+  totalLessons  Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  units         Unit[]
+}
+
+model Unit {
+  id          String   @id @default(uuid())
+  courseId    String
+  title       String
+  description String?
+  orderIndex  Int      @default(0)
+
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons     Lesson[]
+}
+
+model Lesson {
+  id               String             @id @default(uuid())
+  unitId           String
+  title            String
+  type             String
+  content          String
+  orderIndex       Int                @default(0)
+  estimatedMinutes Int                @default(10)
+
+  unit             Unit               @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  progress         LearningProgress[]
+}
+
+model LearningProgress {
+  id          String   @id @default(uuid())
+  userId      String
+  lessonId    String
+  completed   Boolean  @default(false)
+  score       Int?
+  timeSpent   Int?
+  completedAt DateTime?
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+}
+
+model Vocabulary {
+  id              String   @id @default(uuid())
+  language        String
+  word            String
+  pronunciation   String?
+  meaning         String
+  exampleSentence String?
+  audioUrl        String?
+  difficulty      String   @default("medium")
+
+  reviews         VocabularyReview[]
+}
+
+model VocabularyReview {
+  id             String     @id @default(uuid())
+  userId         String
+  vocabularyId   String
+  easeFactor     Float      @default(2.5)
+  interval       Int        @default(1)
+  nextReviewDate DateTime
+  reviewCount    Int        @default(0)
+  lastReviewedAt DateTime?
+
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vocabulary     Vocabulary @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, vocabularyId])
+}
+
+model Post {
+  id         String   @id @default(uuid())
+  authorId   String
+  content    String
+  images     String?
+  likesCount Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  author     User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  likes      Like[]
+  comments   Comment[]
+}
+
+model Like {
+  id        String   @id @default(uuid())
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  postId    String
+  authorId  String
+  content   String
+  createdAt DateTime @default(now())
+
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+}
+
+model Achievement {
+  id              String             @id @default(uuid())
+  code            String             @unique
+  title           String
+  description     String?
+  icon            String?
+  category        String?
+  requirement     String
+
+  userAchievements UserAchievement[]
+}
+
+model UserAchievement {
+  id            String      @id @default(uuid())
+  userId        String
+  achievementId String
+  unlockedAt    DateTime    @default(now())
+
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+}
